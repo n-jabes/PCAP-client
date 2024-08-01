@@ -233,18 +233,21 @@ const formatDateToYMDHM = (dateString) => {
 };
 
 const getCountryName = (code) => {
-  if (!code || code === 'N/A') return 'Unknown';
+  if (!code || code === 'N/A') return '';
 
   // Remove any non-digit characters from the code
   const numericCode = code.replace(/\D/g, '');
 
-  return numericCountryCodeMap[numericCode] || 'Unknown';
+  return numericCountryCodeMap[numericCode] || '';
 };
 
 const PcapDataTable = () => {
   const [data, setData] = useState([]);
+  const [showEmptyRows, setShowEmptyRows] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchData = () => {
+    setLoading(true);
     axios
       .get('https://pcap-backend.onrender.com/api/pcap-data')
       .then((response) => {
@@ -258,6 +261,9 @@ const PcapDataTable = () => {
       })
       .catch((error) => {
         console.error('Error fetching pcap data:', error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -265,53 +271,119 @@ const PcapDataTable = () => {
     return value && value !== 'N/A';
   };
 
+  const toggleShowEmptyRows = () => {
+    setShowEmptyRows(!showEmptyRows);
+  };
 
-  useEffect(()=>{
-    fetchData()
-  },[])
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const filteredData = showEmptyRows
+    ? data
+    : data.filter(
+        (packet) =>
+          isValidValue(packet.callingPartyNumber) ||
+          isValidValue(packet.calledPartyNumber)
+      );
 
   return (
-    <div className="">
-      <h1 className="">PCAP Data Viewer</h1>
-      <button
-        onClick={fetchData}
-        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 mt-4 rounded"
-      >
-        Fetch Data
-      </button>
-      <div className="">
-        <table className="table-auto">
-          <thead>
-            <tr className="">
-              <th className="">Time</th>
-              <th className="">Calling Party Number</th>
-              <th className="">Called Party Number</th>
-              <th className="">Country Code</th>
-              <th className="">MSISDN</th>
-              <th className="">Location Number</th>
-              <th className="">Location Country Code</th>
+    <div className="p-6 h-[100vh] overflow-y-auto">
+      <h1 className="text-2xl font-bold mb-3">PCAP Data Viewer</h1>
+      <div className="md:w-[55%] my-2 flex flex-col md:flex-row md:items-center md:justify-between md:gap-8 gap-2">
+        <button
+          onClick={fetchData}
+          className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
+        >
+          Fetch Data
+        </button>
+        <form action="">
+          <div className="flex gap-2 items-center">
+            <input
+              type="number"
+              placeholder="Enter number"
+              className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 md:w-[20vw] sm:w-[40vw] w-[50vw] rounded"
+            />
+            <button
+              type="submit"
+              className="w-max text-sm px-6 py-2 bg-gray-200 text-white font-medium rounded border-[1px] bg-gray-500 hover:bg-gray-700 hover:text-white "
+            >
+              Filter
+            </button>
+          </div>
+        </form>
+        <button
+          onClick={toggleShowEmptyRows}
+          className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
+        >
+          {showEmptyRows ? 'Hide Empty Rows' : 'Show Empty Rows'}
+        </button>
+      </div>
+
+      <div className="mt-2 overflow-x-auto border-[1px] border-gray-200 h-[75vh]">
+        <table className="min-w-full text-sm">
+          <thead className="sticky top-0  bg-white border-b-[1px] border-b-gray-200">
+            <tr className="text-gray-500 text-xs text-left ">
+              <th className="py-3 px-4 border-b">#</th>
+              <th className="py-3 px-4 border-b font-bold">Time</th>
+              <th className="py-3 px-4 border-b font-bold">
+                Calling Party Number
+              </th>
+              <th className="py-3 px-4 border-b font-bold">
+                Called Party Number
+              </th>
+              <th className="py-3 px-4 border-b font-bold">Country Code</th>
+              <th className="py-3 px-4 border-b font-bold">MSISDN</th>
+              <th className="py-3 px-4 border-b font-bold">Location Number</th>
+              <th className="py-3 px-4 border-b font-bold">
+                Location Country Code
+              </th>
             </tr>
           </thead>
           <tbody>
-            {data
-              .filter(
-                (packet) =>
-                  isValidValue(packet.callingPartyNumber) ||
-                  isValidValue(packet.calledPartyNumber)
-              )
-              .map((packet, index) => (
-                <tr key={index} className="">
-                  <td className="">{packet.time || 'N/A'}</td>
-                  <td className="">{packet.callingPartyNumber || 'N/A'}</td>
-                  <td className="">{packet.calledPartyNumber || 'N/A'}</td>
-                  <td className="">{packet.countryCode || 'N/A'}</td>
-                  <td className="">{packet.msisdn || 'N/A'}</td>
-                  <td className="">{packet.locationNumber || 'N/A'}</td>
-                  <td className="">{packet.locationCountryCode || 'N/A'}</td>
+            {loading ? (
+              <tr>
+                <td colSpan="8" className="text-center py-10">
+                  <div className="flex justify-center items-center">
+                    <div className="w-8 h-8 border-4 border-t-4 border-gray-200 rounded-full animate-spin"></div>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredData.map((packet, index) => (
+                <tr key={index} className="bg-white hover:bg-[#f7fafa]">
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {index + 1}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {packet.time}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {packet.callingPartyNumber}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {packet.calledPartyNumber}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {packet.countryCode}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {packet.msisdn}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {packet.locationNumber}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600">
+                    {packet.locationCountryCode}
+                  </td>
                 </tr>
-              ))}
+              ))
+            )}
           </tbody>
         </table>
+      </div>
+      <div className="w-full bg-gray-100 pt-[2px] px-4 text-sm">
+        Total packets: {filteredData.length}
       </div>
     </div>
   );
