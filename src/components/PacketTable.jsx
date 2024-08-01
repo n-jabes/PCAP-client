@@ -275,9 +275,9 @@ const PcapDataTable = () => {
     setShowEmptyRows(!showEmptyRows);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
 
   const filteredData = showEmptyRows
     ? data
@@ -344,8 +344,8 @@ const PcapDataTable = () => {
             {loading ? (
               <tr>
                 <td colSpan="8" className="text-center py-10">
-                  <div className="flex justify-center items-center">
-                    <div className="w-8 h-8 border-4 border-t-4 border-gray-200 rounded-full animate-spin"></div>
+                  <div className="flex flex-col items-center justify-center h-[10vh] my-[2.5vh]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-500"></div>
                   </div>
                 </td>
               </tr>
