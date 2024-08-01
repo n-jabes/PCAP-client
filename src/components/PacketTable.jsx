@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import countries from 'i18n-iso-countries';
 import en from 'i18n-iso-countries/langs/en.json';
@@ -246,7 +246,7 @@ const PcapDataTable = () => {
 
   const fetchData = () => {
     axios
-      .get('http://localhost:3000/api/pcap-data')
+      .get('https://pcap-backend.onrender.com/api/pcap-data')
       .then((response) => {
         const transformedData = response.data.map((packet) => ({
           ...packet,
@@ -264,6 +264,11 @@ const PcapDataTable = () => {
   const isValidValue = (value) => {
     return value && value !== 'N/A';
   };
+
+
+  useEffect(()=>{
+    fetchData()
+  },[])
 
   return (
     <div className="">
@@ -295,27 +300,14 @@ const PcapDataTable = () => {
                   isValidValue(packet.calledPartyNumber)
               )
               .map((packet, index) => (
-                <tr
-                  key={index}
-                  className=""
-                >
-                  <td className="" >{packet.time || 'N/A'}</td>
-                  <td className="" >
-                    {packet.callingPartyNumber || 'N/A'}
-                  </td>
-                  <td className="" >
-                    {packet.calledPartyNumber || 'N/A'}
-                  </td>
-                  <td className="" >
-                    {packet.countryCode || 'N/A'}
-                  </td>
-                  <td className="" >{packet.msisdn || 'N/A'}</td>
-                  <td className="" >
-                    {packet.locationNumber || 'N/A'}
-                  </td>
-                  <td className="" >
-                    {packet.locationCountryCode || 'N/A'}
-                  </td>
+                <tr key={index} className="">
+                  <td className="">{packet.time || 'N/A'}</td>
+                  <td className="">{packet.callingPartyNumber || 'N/A'}</td>
+                  <td className="">{packet.calledPartyNumber || 'N/A'}</td>
+                  <td className="">{packet.countryCode || 'N/A'}</td>
+                  <td className="">{packet.msisdn || 'N/A'}</td>
+                  <td className="">{packet.locationNumber || 'N/A'}</td>
+                  <td className="">{packet.locationCountryCode || 'N/A'}</td>
                 </tr>
               ))}
           </tbody>
