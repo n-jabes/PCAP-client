@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import countries from 'i18n-iso-countries';
 import en from 'i18n-iso-countries/langs/en.json';
-import ReactPaginate from 'react-paginate';
-import './paginationStyles.css';
+import Pagination from '@mui/material/Pagination';
 
 const numericCountryCodeMap = {
   1: 'United States / Canada',
@@ -248,7 +247,7 @@ const PcapDataTable = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filteredData, setFilteredData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -303,7 +302,7 @@ const PcapDataTable = () => {
       return packetDate >= start && packetDate <= end;
     });
     setFilteredData(filtered);
-    setCurrentPage(0);
+    setCurrentPage(1);
   };
 
   const finalData = showEmptyRows
@@ -315,15 +314,15 @@ const PcapDataTable = () => {
       );
 
   const pageCount = Math.ceil(finalData.length / itemsPerPage);
-  const offset = currentPage * itemsPerPage;
+  const offset = (currentPage - 1) * itemsPerPage;
   const currentData = finalData.slice(offset, offset + itemsPerPage);
 
-  const handlePageClick = ({ selected }) => {
-    setCurrentPage(selected);
+  const handlePageChange = (event, page) => {
+    setCurrentPage(page);
   };
 
   return (
-    <div className="p-6 h-[100vh] overflow-y-auto pb-6">
+    <div className="px-6 py-2 h-[100vh] overflow-y-auto">
       <h1 className="text-2xl font-bold mb-3">Location update</h1>
       <div className="md:w-[44%] my-2 flex flex-col md:flex-row md:items-center md:justify-between md:gap-8 gap-2">
         <button
@@ -363,7 +362,7 @@ const PcapDataTable = () => {
         </button>
       </form>
 
-      <div className="mt-2 overflow-x-auto border-[1px] border-gray-200 min-h-[62vh] h-max">
+      <div className="mt-2 overflow-x-auto border-[1px] border-gray-200 h-max min-h-[60vh]">
         <table className="min-w-full text-sm">
           <thead className="sticky top-0  bg-white border-b-[1px] border-b-gray-200">
             <tr className="text-gray-500 text-xs text-left ">
@@ -426,23 +425,22 @@ const PcapDataTable = () => {
         </table>
       </div>
 
-      <ReactPaginate
-        previousLabel={'Previous'}
-        nextLabel={'Next'}
-        breakLabel={'...'}
-        pageCount={pageCount}
-        marginPagesDisplayed={2}
-        pageRangeDisplayed={5}
-        onPageChange={handlePageClick}
-        containerClassName={'pagination'}
-        activeClassName={'active'}
-        previousLinkClassName={'prev-link'}
-        nextLinkClassName={'next-link'}
-        disabledClassName={'disabled'}
-        breakLinkClassName={'break-link'}
-        pageClassName={'page-item'}
-        pageLinkClassName={'page-link'}
-      />
+      <div className="w-full bg-gray-100 pt-[2px] px-4 text-sm">
+        Total packets:
+        <span className="text-gray-500 font-bold">{finalData.length}</span>
+      </div>
+
+      <div className="mt-4 flex justify-center">
+        <Pagination
+          count={pageCount}
+          page={currentPage}
+          onChange={handlePageChange}
+          variant="outlined"
+          shape="rounded"
+          size="small"
+          color="primary"
+        />
+      </div>
     </div>
   );
 };
