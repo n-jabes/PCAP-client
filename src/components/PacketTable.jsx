@@ -290,7 +290,7 @@ const PcapDataTable = () => {
   return (
     <div className="p-6 h-[100vh] overflow-y-auto">
       <h1 className="text-2xl font-bold mb-3">PCAP Data Viewer</h1>
-      <div className="md:w-[55%] my-2 flex flex-col md:flex-row md:items-center md:justify-between md:gap-8 gap-2">
+      <div className="md:w-[60%] my-2 flex flex-col md:flex-row md:items-center md:justify-between md:gap-8 gap-2">
         <button
           onClick={fetchData}
           className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
