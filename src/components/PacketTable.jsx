@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import countries from 'i18n-iso-countries';
 import en from 'i18n-iso-countries/langs/en.json';
@@ -245,6 +245,9 @@ const PcapDataTable = () => {
   const [data, setData] = useState([]);
   const [showEmptyRows, setShowEmptyRows] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
 
   const fetchData = () => {
     setLoading(true);
@@ -258,6 +261,7 @@ const PcapDataTable = () => {
         }));
 
         setData(transformedData);
+        setFilteredData(transformedData); // Initialize filteredData with all data
       })
       .catch((error) => {
         console.error('Error fetching pcap data:', error);
@@ -275,48 +279,68 @@ const PcapDataTable = () => {
     setShowEmptyRows(!showEmptyRows);
   };
 
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
+  const handleStartDateChange = (event) => {
+    setStartDate(event.target.value);
+  };
 
-  const filteredData = showEmptyRows
-    ? data
-    : data.filter(
+  const handleEndDateChange = (event) => {
+    setEndDate(event.target.value);
+  };
+
+  const filterDataByDate = () => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const filtered = data.filter((packet) => {
+      const packetDate = new Date(packet.time);
+      return packetDate >= start && packetDate <= end;
+    });
+    setFilteredData(filtered);
+  };
+
+  const finalData = showEmptyRows
+    ? filteredData
+    : filteredData.filter(
         (packet) =>
           isValidValue(packet.callingPartyNumber) ||
           isValidValue(packet.calledPartyNumber)
       );
 
   return (
-    <div className="p-6 h-[100vh] overflow-y-auto">
+    <div className="p-6 h-[100vh] overflow-y-auto pb-12">
       <h1 className="text-2xl font-bold mb-3">PCAP Data Viewer</h1>
-      <div className="md:w-[60%] my-2 flex flex-col md:flex-row md:items-center md:justify-between md:gap-8 gap-2">
+      <div className="md:w-[44%] my-2 flex flex-col md:flex-row md:items-center md:justify-between md:gap-8 gap-2">
         <button
           onClick={fetchData}
           className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
         >
-          Fetch Data
+          Fetch MSISDN
         </button>
-        <form action="">
-          <div className="flex gap-2 items-center">
-            <input
-              type="number"
-              placeholder="Enter number"
-              className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 md:w-[20vw] sm:w-[40vw] w-[50vw] rounded"
-            />
-            <button
-              type="submit"
-              className="w-max text-sm px-6 py-2 bg-gray-200 text-white font-medium rounded border-[1px] bg-gray-500 hover:bg-gray-700 hover:text-white "
-            >
-              Filter
-            </button>
-          </div>
-        </form>
         <button
           onClick={toggleShowEmptyRows}
           className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
         >
           {showEmptyRows ? 'Hide Empty Rows' : 'Show Empty Rows'}
+        </button>
+      </div>
+
+      <div className="my-2 flex flex-wrap gap-4">
+        <input
+          type="datetime-local"
+          value={startDate}
+          onChange={handleStartDateChange}
+          className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
+        />
+        <input
+          type="datetime-local"
+          value={endDate}
+          onChange={handleEndDateChange}
+          className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
+        />
+        <button
+          onClick={filterDataByDate}
+          className="w-max text-sm px-6 py-2 bg-gray-200 text-white font-medium rounded border-[1px] bg-gray-500 hover:bg-gray-700 hover:text-white"
+        >
+          Filter
         </button>
       </div>
 
@@ -344,13 +368,13 @@ const PcapDataTable = () => {
             {loading ? (
               <tr>
                 <td colSpan="8" className="text-center py-10">
-                  <div className="flex flex-col items-center justify-center h-[10vh] my-[2.5vh]">
+                  <div className="ml-[45vw] my-[10vh]">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-500"></div>
                   </div>
                 </td>
               </tr>
             ) : (
-              filteredData.map((packet, index) => (
+              finalData.map((packet, index) => (
                 <tr key={index} className="bg-white hover:bg-[#f7fafa]">
                   <td className="py-2 px-4 border-b text-gray-600">
                     {index + 1}
@@ -383,7 +407,7 @@ const PcapDataTable = () => {
         </table>
       </div>
       <div className="w-full bg-gray-100 pt-[2px] px-4 text-sm">
-        Total packets: {filteredData.length}
+        Total packets: {finalData.length}
       </div>
     </div>
   );
