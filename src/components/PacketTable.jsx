@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import countries from 'i18n-iso-countries';
 import en from 'i18n-iso-countries/langs/en.json';
+import ReactPaginate from 'react-paginate';
+import './paginationStyles.css';
 
 const numericCountryCodeMap = {
   1: 'United States / Canada',
@@ -235,9 +237,7 @@ const formatDateToYMDHM = (dateString) => {
 const getCountryName = (code) => {
   if (!code || code === 'N/A') return '';
 
-  // Remove any non-digit characters from the code
   const numericCode = code.replace(/\D/g, '');
-
   return numericCountryCodeMap[numericCode] || '';
 };
 
@@ -248,6 +248,12 @@ const PcapDataTable = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filteredData, setFilteredData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const fetchData = () => {
     setLoading(true);
@@ -261,7 +267,7 @@ const PcapDataTable = () => {
         }));
 
         setData(transformedData);
-        setFilteredData(transformedData); // Initialize filteredData with all data
+        setFilteredData(transformedData);
       })
       .catch((error) => {
         console.error('Error fetching pcap data:', error);
@@ -287,7 +293,9 @@ const PcapDataTable = () => {
     setEndDate(event.target.value);
   };
 
-  const filterDataByDate = () => {
+  const filterDataByDate = (event) => {
+    event.preventDefault();
+
     const start = new Date(startDate);
     const end = new Date(endDate);
     const filtered = data.filter((packet) => {
@@ -295,6 +303,7 @@ const PcapDataTable = () => {
       return packetDate >= start && packetDate <= end;
     });
     setFilteredData(filtered);
+    setCurrentPage(0);
   };
 
   const finalData = showEmptyRows
@@ -305,9 +314,17 @@ const PcapDataTable = () => {
           isValidValue(packet.calledPartyNumber)
       );
 
+  const pageCount = Math.ceil(finalData.length / itemsPerPage);
+  const offset = currentPage * itemsPerPage;
+  const currentData = finalData.slice(offset, offset + itemsPerPage);
+
+  const handlePageClick = ({ selected }) => {
+    setCurrentPage(selected);
+  };
+
   return (
-    <div className="p-6 h-[100vh] overflow-y-auto pb-12">
-      <h1 className="text-2xl font-bold mb-3">PCAP Data Viewer</h1>
+    <div className="p-6 h-[100vh] overflow-y-auto pb-6">
+      <h1 className="text-2xl font-bold mb-3">Location update</h1>
       <div className="md:w-[44%] my-2 flex flex-col md:flex-row md:items-center md:justify-between md:gap-8 gap-2">
         <button
           onClick={fetchData}
@@ -323,28 +340,30 @@ const PcapDataTable = () => {
         </button>
       </div>
 
-      <div className="my-2 flex flex-wrap gap-4">
+      <form className="my-2 flex flex-wrap gap-4" onSubmit={filterDataByDate}>
         <input
           type="datetime-local"
           value={startDate}
           onChange={handleStartDateChange}
           className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
+          required
         />
         <input
           type="datetime-local"
           value={endDate}
           onChange={handleEndDateChange}
           className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
+          required
         />
         <button
-          onClick={filterDataByDate}
+          type="submit"
           className="w-max text-sm px-6 py-2 bg-gray-200 text-white font-medium rounded border-[1px] bg-gray-500 hover:bg-gray-700 hover:text-white"
         >
           Filter
         </button>
-      </div>
+      </form>
 
-      <div className="mt-2 overflow-x-auto border-[1px] border-gray-200 h-[75vh]">
+      <div className="mt-2 overflow-x-auto border-[1px] border-gray-200 min-h-[62vh] h-max">
         <table className="min-w-full text-sm">
           <thead className="sticky top-0  bg-white border-b-[1px] border-b-gray-200">
             <tr className="text-gray-500 text-xs text-left ">
@@ -374,10 +393,10 @@ const PcapDataTable = () => {
                 </td>
               </tr>
             ) : (
-              finalData.map((packet, index) => (
+              currentData.map((packet, index) => (
                 <tr key={index} className="bg-white hover:bg-[#f7fafa]">
                   <td className="py-2 px-4 border-b text-gray-600">
-                    {index + 1}
+                    {index + 1 + offset}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600">
                     {packet.time}
@@ -406,9 +425,24 @@ const PcapDataTable = () => {
           </tbody>
         </table>
       </div>
-      <div className="w-full bg-gray-100 pt-[2px] px-4 text-sm">
-        Total packets: {finalData.length}
-      </div>
+
+      <ReactPaginate
+        previousLabel={'Previous'}
+        nextLabel={'Next'}
+        breakLabel={'...'}
+        pageCount={pageCount}
+        marginPagesDisplayed={2}
+        pageRangeDisplayed={5}
+        onPageChange={handlePageClick}
+        containerClassName={'pagination'}
+        activeClassName={'active'}
+        previousLinkClassName={'prev-link'}
+        nextLinkClassName={'next-link'}
+        disabledClassName={'disabled'}
+        breakLinkClassName={'break-link'}
+        pageClassName={'page-item'}
+        pageLinkClassName={'page-link'}
+      />
     </div>
   );
 };
