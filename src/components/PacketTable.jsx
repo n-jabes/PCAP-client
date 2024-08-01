@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import countries from 'i18n-iso-countries';
 import en from 'i18n-iso-countries/langs/en.json';
@@ -244,14 +244,13 @@ const getCountryName = (code) => {
 const PcapDataTable = () => {
   const [data, setData] = useState([]);
 
-  useEffect(() => {
+  const fetchData = () => {
     axios
       .get('http://localhost:3000/api/pcap-data')
       .then((response) => {
         const transformedData = response.data.map((packet) => ({
           ...packet,
           time: formatDateToYMDHM(packet.time),
-          // countryCode: getCountryName(packet.countryCode),
           locationCountryCode: getCountryName(packet.locationCountryCode),
         }));
 
@@ -260,47 +259,68 @@ const PcapDataTable = () => {
       .catch((error) => {
         console.error('Error fetching pcap data:', error);
       });
-  }, []);
+  };
 
   const isValidValue = (value) => {
     return value && value !== 'N/A';
   };
 
   return (
-    <div>
-      <h1>PCAP Data</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Calling Party Number</th>
-            <th>Called Party Number</th>
-            <th>Country Code</th>
-            <th>MSISDN</th>
-            <th>Location Number</th>
-            <th>Location Country Code</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data
-            .filter(
-              (packet) =>
-                isValidValue(packet.callingPartyNumber) ||
-                isValidValue(packet.calledPartyNumber)
-            )
-            .map((packet, index) => (
-              <tr key={index}>
-                <td>{packet.time || 'N/A'}</td>
-                <td>{packet.callingPartyNumber || 'N/A'}</td>
-                <td>{packet.calledPartyNumber || 'N/A'}</td>
-                <td>{packet.countryCode || 'N/A'}</td>
-                <td>{packet.msisdn || 'N/A'}</td>
-                <td>{packet.locationNumber || 'N/A'}</td>
-                <td>{packet.locationCountryCode || 'N/A'}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+    <div className="">
+      <h1 className="">PCAP Data Viewer</h1>
+      <button
+        onClick={fetchData}
+        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 mt-4 rounded"
+      >
+        Fetch Data
+      </button>
+      <div className="">
+        <table className="table-auto">
+          <thead>
+            <tr className="">
+              <th className="">Time</th>
+              <th className="">Calling Party Number</th>
+              <th className="">Called Party Number</th>
+              <th className="">Country Code</th>
+              <th className="">MSISDN</th>
+              <th className="">Location Number</th>
+              <th className="">Location Country Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data
+              .filter(
+                (packet) =>
+                  isValidValue(packet.callingPartyNumber) ||
+                  isValidValue(packet.calledPartyNumber)
+              )
+              .map((packet, index) => (
+                <tr
+                  key={index}
+                  className=""
+                >
+                  <td className="" >{packet.time || 'N/A'}</td>
+                  <td className="" >
+                    {packet.callingPartyNumber || 'N/A'}
+                  </td>
+                  <td className="" >
+                    {packet.calledPartyNumber || 'N/A'}
+                  </td>
+                  <td className="" >
+                    {packet.countryCode || 'N/A'}
+                  </td>
+                  <td className="" >{packet.msisdn || 'N/A'}</td>
+                  <td className="" >
+                    {packet.locationNumber || 'N/A'}
+                  </td>
+                  <td className="" >
+                    {packet.locationCountryCode || 'N/A'}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
