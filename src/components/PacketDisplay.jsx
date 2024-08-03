@@ -251,7 +251,7 @@ const getCountryName = (code) => {
   return numericCountryCodeMap[numericCode] || '';
 };
 
-const PcapDataTable = () => {
+const PacketDisplay = () => {
   const [data, setData] = useState([]);
   const [showEmptyRows, setShowEmptyRows] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -458,4 +458,4 @@ const PcapDataTable = () => {
   );
 };
 
-export default PcapDataTable;
+export default PacketDisplay;
