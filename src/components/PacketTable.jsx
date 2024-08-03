@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Pagination from '@mui/material/Pagination';
+import Locations from '../utils/Locations';
 
 const formatDateToYMDHM = (dateString) => {
   const date = new Date(dateString);
@@ -29,17 +29,32 @@ const PcapDataTable = () => {
     fetchData();
   }, []);
 
+  
+  const getLocationDetails = (locationCode) => {
+    for (const site of Locations) {
+      for (const sector of site.sectors) {
+        if (sector.code === locationCode) {
+          return {
+            siteName: site.siteName,
+            sectorName: sector.name,
+          };
+        }
+      }
+    }
+    return { siteName: 'Unknown', sectorName: 'Unknown' };
+  };
+
   const fetchData = () => {
     setLoading(true);
     axios
-      .get('https://pcap-backend.onrender.com/api/subscriber-data')
+      .get('http://localhost:3000/api/subscriber-data')
       .then((response) => {
         const transformedData = response.data.map((subscriber) => ({
           ...subscriber,
           time: formatDateToYMDHM(subscriber.time),
         }));
 
-        console.log(transformedData);
+        // console.log(transformedData);
         setData(transformedData);
         setFilteredData(transformedData);
       })
@@ -103,6 +118,7 @@ const PcapDataTable = () => {
     setFilterValue('');
     setStartDate('');
     setEndDate('');
+    fetchData();
   };
 
   const pageCount = Math.ceil(filteredData.length / itemsPerPage);
@@ -114,16 +130,41 @@ const PcapDataTable = () => {
   };
 
   return (
-    <div className="px-6 py-2 h-[100vh] overflow-y-auto">
-      <h1 className="text-2xl font-bold mb-3">Subscriber Data</h1>
-      <button
-        onClick={fetchData}
-        className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded mb-4"
-      >
-        Fetch All Subscriber Data
-      </button>
-
+    <div className="px-6 py-2 h-max overflow-y-auto">
       <div className="my-2 flex flex-wrap gap-2">
+        <h3 className="w-full font-bold">Subscriber Filters</h3>
+        <form
+          id="dataFilterForm"
+          className="flex flex-wrap gap-4"
+          onSubmit={filterData}
+        >
+          <select
+            value={filterType}
+            onChange={handleFilterTypeChange}
+            className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
+          >
+            <option value="MTN">MTN</option>
+            <option value="Airtel">Airtel</option>
+            <option value="KTRN">KTRN</option>
+          </select>
+
+          {/* to be used when the user is required to enter an input */}
+          {/* <input
+            type="text"
+            value={filterValue}
+            onChange={handleFilterValueChange}
+            placeholder={`Filter by ${filterType}`}
+            className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
+          /> */}
+          <button
+            onClick={fetchData}
+            className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
+          >
+            Fetch All
+          </button>
+        </form>
+
+        {/* time filters */}
         <h3 className="w-full font-bold">Time Filters</h3>
         <form
           id="timeFilterForm"
@@ -150,7 +191,8 @@ const PcapDataTable = () => {
           </button>
         </form>
 
-        <h3 className="w-full font-bold">Data Filters</h3>
+        {/* subscriber filters */}
+        <h3 className="w-full font-bold">Subscriber Filters</h3>
         <form
           id="dataFilterForm"
           className="flex flex-wrap gap-4"
@@ -176,9 +218,10 @@ const PcapDataTable = () => {
             type="submit"
             className="w-max text-sm px-6 py-2 bg-gray-200 text-white font-medium rounded border-[1px] bg-gray-500 hover:bg-gray-700 hover:text-white"
           >
-            Apply Data Filter
+            Search
           </button>
         </form>
+
         <button
           type=""
           className="w-max text-sm px-6 py-2 bg-gray-200 text-white font-medium rounded border-[1px] bg-gray-500 hover:bg-gray-700 hover:text-white"
@@ -219,6 +262,12 @@ const PcapDataTable = () => {
               </th>
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 Location
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                Site Name
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                Sector Location
               </th>
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 HssRealm
@@ -272,6 +321,12 @@ const PcapDataTable = () => {
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.Location}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {getLocationDetails(subscriber.Location).siteName}
+                  </td>
+                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {getLocationDetails(subscriber.Location).sectorName}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.HssRealm}
