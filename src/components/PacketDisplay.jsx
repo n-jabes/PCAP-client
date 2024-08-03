@@ -1,27 +1,13 @@
-// 
-// 
-// 
+//
+//
+//
 // THIS IS THE BACKUP FOR THE CODES I USED WHEN WORKING WITH .PCAP FILES
-// 
-// 
-// 
-// 
-// 
-// 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//
+//
+//
+//
+//
+//
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
