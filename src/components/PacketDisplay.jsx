@@ -1,13 +1,27 @@
-//
-//
-//
+// 
+// 
+// 
 // THIS IS THE BACKUP FOR THE CODES I USED WHEN WORKING WITH .PCAP FILES
-//
-//
-//
-//
-//
-//
+// 
+// 
+// 
+// 
+// 
+// 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -251,7 +265,7 @@ const getCountryName = (code) => {
   return numericCountryCodeMap[numericCode] || '';
 };
 
-const PacketDisplay = () => {
+const PcapDataTable = () => {
   const [data, setData] = useState([]);
   const [showEmptyRows, setShowEmptyRows] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -268,7 +282,7 @@ const PacketDisplay = () => {
   const fetchData = () => {
     setLoading(true);
     axios
-      .get('https://pcap-backend.onrender.com/api/pcap-data/')
+      .get('http://localhost:3000/api/pcap-data/')
       .then((response) => {
         const transformedData = response.data.map((packet) => ({
           ...packet,
@@ -458,4 +472,4 @@ const PacketDisplay = () => {
   );
 };
 
-export default PacketDisplay;
+export default PcapDataTable;
