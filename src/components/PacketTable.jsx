@@ -21,6 +21,7 @@ const PcapDataTable = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filterType, setFilterType] = useState('IMSI');
+  const [Operator, setOperator] = useState('MTN');
   const [filterValue, setFilterValue] = useState('');
   const [filteredData, setFilteredData] = useState([]);
   const itemsPerPage = 10;
@@ -77,6 +78,10 @@ const PcapDataTable = () => {
     setFilterType(event.target.value);
   };
 
+  const handleOperatorChange = (event) => {
+    setOperator(event.target.value);
+  };
+
   const handleFilterValueChange = (event) => {
     setFilterValue(event.target.value);
   };
@@ -131,7 +136,7 @@ const PcapDataTable = () => {
   return (
     <div className="px-6 py-2 h-max overflow-y-auto">
       <div className="my-2 flex flex-wrap gap-2">
-        <h3 className="w-full font-bold">Subscriber Filters</h3>
+        <h3 className="w-full font-bold">Choose Operator</h3>
         <form
           id="dataFilterForm"
           className="flex flex-wrap gap-4"
@@ -139,7 +144,7 @@ const PcapDataTable = () => {
         >
           <select
             value={filterType}
-            onChange={handleFilterTypeChange}
+            onChange={handleOperatorChange}
             className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
           >
             <option value="MTN">MTN</option>
