@@ -29,7 +29,6 @@ const PcapDataTable = () => {
     fetchData();
   }, []);
 
-  
   const getLocationDetails = (locationCode) => {
     for (const site of Locations) {
       for (const sector of site.sectors) {
@@ -47,7 +46,7 @@ const PcapDataTable = () => {
   const fetchData = () => {
     setLoading(true);
     axios
-      .get('http://localhost:3000/api/subscriber-data')
+      .get('https://pcap-backend.onrender.com/api/subscriber-data')
       .then((response) => {
         const transformedData = response.data.map((subscriber) => ({
           ...subscriber,
