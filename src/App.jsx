@@ -4,7 +4,6 @@
 // function App() {
 //   const [selectedTab, setSelectedTab] = useState('Location Update');
 
-
 //   return (
 //     <div className="h-[100vh] bg-[#f8f8f8] overflow-y-auto pb-2">
 //       {/* header section */}
@@ -86,8 +85,6 @@
 
 // export default App;
 
-
-
 import React, { useState } from 'react';
 import axios from 'axios';
 import PacketTable from './components/PacketTable';
@@ -103,7 +100,7 @@ function App() {
 
   const handleUploadForm = async (event) => {
     event.preventDefault();
-    
+
     if (!selectedFile) {
       setUploadStatus('Please select a file to upload.');
       return;
@@ -114,11 +111,15 @@ function App() {
 
     try {
       setUploadStatus('Uploading...');
-      const response = await axios.post('https://pcap-backend.onrender.com/api/upload-subscriber-file', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      const response = await axios.post(
+        'https://pcap-backend.onrender.com/api/upload-subscriber-file',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         }
-      });
+      );
       setUploadStatus('File uploaded successfully!');
       // Optionally, you can refresh the data or update the UI here
     } catch (error) {
@@ -131,7 +132,7 @@ function App() {
     <div className="h-[100vh] bg-[#f8f8f8] overflow-y-auto pb-2">
       {/* header section */}
       <header className="w-full bg-white border-b-2 border-gray-700">
-      <button
+        <button
           type="submit"
           className={`w-max text-sm px-6 py-2 font-medium border-l-[1px] border-gray-700 hover:bg-gray-700 hover:text-white ${
             selectedTab === 'Location Update'
@@ -194,16 +195,16 @@ function App() {
           <h1 className="text-2xl font-bold mb-3">Upload File</h1>
           <form onSubmit={handleUploadForm} className="space-y-4">
             <div>
-              <input 
-                type="file" 
-                accept=".txt" 
+              <input
+                type="file"
+                accept=".txt"
                 onChange={handleFileChange}
                 className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
+                  file:mr-4 file:py-2 file:px-4 file:cursor-pointer
                   file:rounded-full file:border-0
                   file:text-sm file:font-semibold
-                  file:bg-gray-50 file:text-gray-700
-                  hover:file:bg-gray-100"
+                  file:bg-gray-300 file:text-gray-700
+                  hover:file:bg-gray-400 hover:file:text-gray-100"
               />
             </div>
             <button
@@ -214,7 +215,9 @@ function App() {
             </button>
           </form>
           {uploadStatus && (
-            <p className="mt-4 text-sm font-medium text-gray-700">{uploadStatus}</p>
+            <p className="mt-4 text-sm font-medium text-gray-700">
+              {uploadStatus}
+            </p>
           )}
         </div>
       )}
