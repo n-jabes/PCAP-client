@@ -47,7 +47,7 @@ const PcapDataTable = () => {
   const fetchData = () => {
     setLoading(true);
     axios
-      .get('https://pcap-backend.onrender.com/api/subscriber-data')
+      .get('http://localhost:3000/api/subscriber-data')
       .then((response) => {
         const transformedData = response.data.map((subscriber) => ({
           ...subscriber,
