@@ -24,6 +24,8 @@ const PcapDataTable = () => {
   const [filterType, setFilterType] = useState('IMSI');
   const [Operator, setOperator] = useState('MTN');
   const [filterValue, setFilterValue] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -86,7 +88,7 @@ const PcapDataTable = () => {
   };
 
   const applyFilter = (filterFunction) => {
-    setCurrentData(prevData => prevData.filter(filterFunction));
+    setCurrentData((prevData) => prevData.filter(filterFunction));
     setCurrentPage(1);
   };
 
@@ -97,14 +99,14 @@ const PcapDataTable = () => {
       if (startDate && endDate) {
         const start = new Date(startDate);
         const end = new Date(endDate);
-        applyFilter(subscriber => {
+        applyFilter((subscriber) => {
           const subscriberDate = new Date(subscriber.time);
           return subscriberDate >= start && subscriberDate <= end;
         });
       }
     } else if (event.target.id === 'dataFilterForm') {
       if (filterValue) {
-        applyFilter(subscriber =>
+        applyFilter((subscriber) =>
           subscriber[filterType]
             .toLowerCase()
             .includes(filterValue.toLowerCase())
@@ -130,8 +132,19 @@ const PcapDataTable = () => {
     setCurrentPage(page);
   };
 
+  const handleRowClick = (location) => {
+    setSelectedLocation(location);
+    // setShowPopup(true);
+    window.open('https://earth.google.com/web', '_blank');
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
+    setSelectedLocation(null);
+  };
+
   return (
-    <div className="px-6 py-2 h-max overflow-y-auto">
+    <div className="px-6 py-2 h-max overflow-y-auto relative">
       <div className="my-2 flex flex-wrap gap-2">
         <h3 className="w-full font-bold">Choose Operator</h3>
         <form
@@ -226,18 +239,42 @@ const PcapDataTable = () => {
           <thead className="sticky top-0 bg-white border-b-[1px] border-b-gray-200">
             <tr className="text-gray-500 text-xs text-left">
               <th className="py-3 px-4 border-b whitespace-nowrap">#</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Time</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">IMSI</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">MSISDN</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">IMEI</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">R (Radio Access Type)</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">MM (Mobility management state)</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">NB</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">RAN-Id</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Location</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Site Name</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Sector Location</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">HssRealm</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                Time
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                IMSI
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                MSISDN
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                IMEI
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                R (Radio Access Type)
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                MM (Mobility management state)
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                NB
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                RAN-Id
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                Location
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                Site Name
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                Sector Location
+              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+                HssRealm
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -251,7 +288,11 @@ const PcapDataTable = () => {
               </tr>
             ) : (
               paginatedData.map((subscriber, index) => (
-                <tr key={index} className="bg-white hover:bg-[#f7fafa]">
+                <tr
+                  key={index}
+                  className="bg-white hover:bg-[#f7fafa] cursor-pointer"
+                  onClick={() => handleRowClick(subscriber.Location)}
+                >
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {index + 1 + offset}
                   </td>
@@ -262,7 +303,8 @@ const PcapDataTable = () => {
                     {subscriber.IMSI}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {subscriber.MSISDN}
+                    {/* {subscriber.MSISDN} */}
+                    **********
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.IMEI}
@@ -320,6 +362,20 @@ const PcapDataTable = () => {
           color="primary"
         />
       </div>
+
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-200 p-6 rounded-lg w-3/4 h-[90%] relative overflow-y-auto">
+            <button
+              onClick={closePopup}
+              className="absolute top-6 right-6 font-bold text-gray-600 hover:text-gray-800 w-max px-2 border-[1px] border-gray-400 rounded"
+            >
+              x
+            </button>
+            <h2 className="text-xl mb-4">Location: {selectedLocation}</h2>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
