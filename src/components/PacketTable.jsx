@@ -16,6 +16,7 @@ const formatDateToYMDHM = (dateString) => {
 
 const PcapDataTable = () => {
   const [data, setData] = useState([]);
+  const [currentData, setCurrentData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [startDate, setStartDate] = useState('');
@@ -23,7 +24,6 @@ const PcapDataTable = () => {
   const [filterType, setFilterType] = useState('IMSI');
   const [Operator, setOperator] = useState('MTN');
   const [filterValue, setFilterValue] = useState('');
-  const [filteredData, setFilteredData] = useState([]);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -54,9 +54,8 @@ const PcapDataTable = () => {
           time: formatDateToYMDHM(subscriber.time),
         }));
 
-        // console.log(transformedData);
         setData(transformedData);
-        setFilteredData(transformedData);
+        setCurrentData(transformedData);
       })
       .catch((error) => {
         console.error('Error fetching subscriber data:', error);
@@ -86,34 +85,32 @@ const PcapDataTable = () => {
     setFilterValue(event.target.value);
   };
 
+  const applyFilter = (filterFunction) => {
+    setCurrentData(prevData => prevData.filter(filterFunction));
+    setCurrentPage(1);
+  };
+
   const filterData = (event) => {
     event.preventDefault();
 
-    let filtered = data;
-
     if (event.target.id === 'timeFilterForm') {
-      // Time filter
       if (startDate && endDate) {
         const start = new Date(startDate);
         const end = new Date(endDate);
-        filtered = filtered.filter((subscriber) => {
+        applyFilter(subscriber => {
           const subscriberDate = new Date(subscriber.time);
           return subscriberDate >= start && subscriberDate <= end;
         });
       }
     } else if (event.target.id === 'dataFilterForm') {
-      // Data filter
       if (filterValue) {
-        filtered = filtered.filter((subscriber) =>
+        applyFilter(subscriber =>
           subscriber[filterType]
             .toLowerCase()
             .includes(filterValue.toLowerCase())
         );
       }
     }
-
-    setFilteredData(filtered);
-    setCurrentPage(1);
   };
 
   const handleClearAllFilters = () => {
@@ -122,12 +119,12 @@ const PcapDataTable = () => {
     setFilterValue('');
     setStartDate('');
     setEndDate('');
-    fetchData();
+    setCurrentData(data);
   };
 
-  const pageCount = Math.ceil(filteredData.length / itemsPerPage);
+  const pageCount = Math.ceil(currentData.length / itemsPerPage);
   const offset = (currentPage - 1) * itemsPerPage;
-  const currentData = filteredData.slice(offset, offset + itemsPerPage);
+  const paginatedData = currentData.slice(offset, offset + itemsPerPage);
 
   const handlePageChange = (event, page) => {
     setCurrentPage(page);
@@ -143,7 +140,7 @@ const PcapDataTable = () => {
           onSubmit={filterData}
         >
           <select
-            value={filterType}
+            value={Operator}
             onChange={handleOperatorChange}
             className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
           >
@@ -151,15 +148,6 @@ const PcapDataTable = () => {
             <option value="Airtel">Airtel</option>
             <option value="KTRN">KTRN</option>
           </select>
-
-          {/* to be used when the user is required to enter an input */}
-          {/* <input
-            type="text"
-            value={filterValue}
-            onChange={handleFilterValueChange}
-            placeholder={`Filter by ${filterType}`}
-            className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
-          /> */}
           <button
             onClick={fetchData}
             className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
@@ -168,7 +156,6 @@ const PcapDataTable = () => {
           </button>
         </form>
 
-        {/* time filters */}
         <h3 className="w-full font-bold">Time Filters</h3>
         <form
           id="timeFilterForm"
@@ -195,7 +182,6 @@ const PcapDataTable = () => {
           </button>
         </form>
 
-        {/* subscriber filters */}
         <h3 className="w-full font-bold">Subscriber Filters</h3>
         <form
           id="dataFilterForm"
@@ -227,7 +213,7 @@ const PcapDataTable = () => {
         </form>
 
         <button
-          type=""
+          type="button"
           className="w-max text-sm px-6 py-2 bg-gray-200 text-white font-medium rounded border-[1px] bg-gray-500 hover:bg-gray-700 hover:text-white"
           onClick={handleClearAllFilters}
         >
@@ -240,55 +226,31 @@ const PcapDataTable = () => {
           <thead className="sticky top-0 bg-white border-b-[1px] border-b-gray-200">
             <tr className="text-gray-500 text-xs text-left">
               <th className="py-3 px-4 border-b whitespace-nowrap">#</th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                Time
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                IMSI
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                MSISDN
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                IMEI
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                R (Radio Access Type)
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                MM (Mobility management state)
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                NB
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                RAN-Id
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                Location
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                Site Name
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                Sector Location
-              </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                HssRealm
-              </th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Time</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">IMSI</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">MSISDN</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">IMEI</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">R (Radio Access Type)</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">MM (Mobility management state)</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">NB</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">RAN-Id</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Location</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Site Name</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">Sector Location</th>
+              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">HssRealm</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="12" className="text-center py-10">
+                <td colSpan="13" className="text-center py-10">
                   <div className="ml-[45vw] my-[10vh]">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-500"></div>
                   </div>
                 </td>
               </tr>
             ) : (
-              currentData.map((subscriber, index) => (
+              paginatedData.map((subscriber, index) => (
                 <tr key={index} className="bg-white hover:bg-[#f7fafa]">
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {index + 1 + offset}
@@ -312,7 +274,7 @@ const PcapDataTable = () => {
                       ? '2G'
                       : subscriber.R === 'W'
                       ? '3G'
-                      : 'Unkown'}
+                      : 'Unknown'}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.MM}
@@ -344,7 +306,7 @@ const PcapDataTable = () => {
 
       <div className="w-full bg-gray-100 pt-[2px] px-4 text-sm">
         Total subscribers:
-        <span className="text-gray-500 font-bold">{filteredData.length}</span>
+        <span className="text-gray-500 font-bold">{currentData.length}</span>
       </div>
 
       <div className="mt-4 flex justify-center">
