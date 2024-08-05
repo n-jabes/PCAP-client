@@ -132,9 +132,25 @@ const PcapDataTable = () => {
     setCurrentPage(page);
   };
 
-  const handleRowClick = (location) => {
-    setSelectedLocation(location);
+  const handleRowClick = (subscriber) => {
+    setSelectedLocation(subscriber.location);
     // setShowPopup(true);
+
+    // Extract the MSISDN and Location from the clicked row
+    const selectedMSISDN = subscriber.MSISDN;
+
+    // Filter data to find rows with the same MSISDN
+    const matchingSubscribers = currentData.filter(
+      (item) => item.MSISDN === selectedMSISDN
+    );
+
+    // Collect the locations of these rows
+    const locations = matchingSubscribers.map((item) => item.Location);
+
+    // Log the locations to the console
+    console.log('Locations for MSISDN', selectedMSISDN, ':', locations);
+
+    //open google earth to plot the locations
     window.open('https://earth.google.com/web', '_blank');
   };
 
@@ -291,7 +307,7 @@ const PcapDataTable = () => {
                 <tr
                   key={index}
                   className="bg-white hover:bg-[#f7fafa] cursor-pointer"
-                  onClick={() => handleRowClick(subscriber.Location)}
+                  
                 >
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {index + 1 + offset}
@@ -302,7 +318,7 @@ const PcapDataTable = () => {
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.IMSI}
                   </td>
-                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" onClick={() => handleRowClick(subscriber)}>
                     {/* {subscriber.MSISDN} */}
                     **********
                   </td>
@@ -327,7 +343,7 @@ const PcapDataTable = () => {
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.RANId}
                   </td>
-                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" onClick={() => handleRowClick(subscriber)}>
                     {subscriber.Location}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -363,7 +379,7 @@ const PcapDataTable = () => {
         />
       </div>
 
-      {showPopup && (
+      {/* {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-200 p-6 rounded-lg w-3/4 h-[90%] relative overflow-y-auto">
             <button
@@ -375,7 +391,7 @@ const PcapDataTable = () => {
             <h2 className="text-xl mb-4">Location: {selectedLocation}</h2>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
