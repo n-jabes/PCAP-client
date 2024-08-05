@@ -46,6 +46,19 @@ const PcapDataTable = () => {
     return { siteName: 'Unknown', sectorName: 'Unknown' };
   };
 
+  const getMapCoordinates = (locationCode) => {
+    const [countryCode, Operator, zone, longitude, latitude] =
+      locationCode.split('-');
+  
+    return {
+      countryCode: countryCode,
+      operator: Operator,
+      zone: zone,
+      longitude: longitude,
+      latitude: latitude,
+    };
+  };
+
   const fetchData = () => {
     setLoading(true);
     axios
@@ -145,7 +158,9 @@ const PcapDataTable = () => {
     );
 
     // Collect the locations of these rows
-    const locations = matchingSubscribers.map((item) => item.Location);
+    const locations = matchingSubscribers.map((item) =>
+      getMapCoordinates(item.Location)
+    );
 
     // Log the locations to the console
     console.log('Locations for MSISDN', selectedMSISDN, ':', locations);
@@ -273,9 +288,9 @@ const PcapDataTable = () => {
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 MM (Mobility management state)
               </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+              {/* <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 NB
-              </th>
+              </th> */}
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 RAN-Id
               </th>
@@ -288,9 +303,9 @@ const PcapDataTable = () => {
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 Sector Location
               </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+              {/* <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 HssRealm
-              </th>
+              </th> */}
             </tr>
           </thead>
           <tbody>
@@ -307,7 +322,6 @@ const PcapDataTable = () => {
                 <tr
                   key={index}
                   className="bg-white hover:bg-[#f7fafa] cursor-pointer"
-                  
                 >
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {index + 1 + offset}
@@ -318,7 +332,10 @@ const PcapDataTable = () => {
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.IMSI}
                   </td>
-                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" onClick={() => handleRowClick(subscriber)}>
+                  <td
+                    className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis"
+                    onClick={() => handleRowClick(subscriber)}
+                  >
                     {/* {subscriber.MSISDN} */}
                     **********
                   </td>
@@ -337,13 +354,16 @@ const PcapDataTable = () => {
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.MM}
                   </td>
-                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {/* <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.NB}
-                  </td>
+                  </td> */}
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.RANId}
                   </td>
-                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" onClick={() => handleRowClick(subscriber)}>
+                  <td
+                    className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis"
+                    onClick={() => handleRowClick(subscriber)}
+                  >
                     {subscriber.Location}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -352,9 +372,9 @@ const PcapDataTable = () => {
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {getLocationDetails(subscriber.Location).sectorName}
                   </td>
-                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {/* <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.HssRealm}
-                  </td>
+                  </td> */}
                 </tr>
               ))
             )}
