@@ -27,7 +27,7 @@ function App() {
     try {
       setUploadStatus('Uploading...');
       const response = await axios.post(
-        ' http://localhost:3000/api/upload-subscriber-file',
+        ' https://pcap-backend.onrender.com/api/upload-subscriber-file',
         formData,
         {
           headers: {
