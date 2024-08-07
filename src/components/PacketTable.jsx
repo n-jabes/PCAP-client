@@ -51,7 +51,7 @@ const PcapDataTable = () => {
     if (location) {
       return {
         siteName: location['Site Name'] || 'Unknown',
-        sectorName: location['Sector Location'] || 'Unknown',
+        sectorName: location['Azimuth(*)'] || 'Unknown',
       };
     }
   
