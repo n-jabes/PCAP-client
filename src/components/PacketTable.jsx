@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Pagination from '@mui/material/Pagination';
-import Locations from '../utils/Locations';
+import Locations from '../utils/2G_core_areas.js';
 
 const formatDateToYMDHM = (dateString) => {
   const date = new Date(dateString);
@@ -32,37 +32,35 @@ const PcapDataTable = () => {
     fetchData();
   }, []);
 
-  const getLocationDetails = (locationCode) => {
-    for (const site of Locations) {
-      for (const sector of site.sectors) {
-        if (sector.code === locationCode) {
-          return {
-            siteName: site.siteName,
-            sectorName: sector.name,
-          };
-        }
-      }
-    }
-    return { siteName: 'Unknown', sectorName: 'Unknown' };
-  };
-
   const getMapCoordinates = (locationCode) => {
-    const [countryCode, Operator, zone, longitude, latitude] =
-      locationCode.split('-');
-  
+    const parts = locationCode.split('-');
+    const lastPart = parts[parts.length - 1];
+
     return {
-      countryCode: countryCode,
-      operator: Operator,
-      zone: zone,
-      longitude: longitude,
-      latitude: latitude,
+      CI: lastPart,
     };
   };
 
+
+  const getLocationDetails = (code) => {
+    const ciCode = getMapCoordinates(code).CI;
+    const location = Locations.find((location) => 
+      String(location['CI(*)']) === ciCode
+    );
+   
+    if (location) {
+      return {
+        siteName: location['Site Name'] || 'Unknown',
+        sectorName: location['Sector Location'] || 'Unknown',
+      };
+    }
+  
+    return { siteName: 'Unknown', sectorName: 'Unknown' };
+  };
   const fetchData = () => {
     setLoading(true);
     axios
-      .get('https://pcap-backend.onrender.com/api/subscriber-data')
+      .get(' http://localhost:3000/api/subscriber-data')
       .then((response) => {
         const transformedData = response.data.map((subscriber) => ({
           ...subscriber,
