@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Pagination from '@mui/material/Pagination';
 import Locations from '../utils/2G_core_areas.js';
+import GoogleMapsEmbed from './GoogleMapsEmbed.jsx';
 
 const formatDateToYMDHM = (dateString) => {
   const date = new Date(dateString);
-  const year = date.getFullYear().toString();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-
-  return `${month}/${day}/${year} ${hours}:${minutes}`;
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(
+    date.getDate()
+  ).padStart(2, '0')}/${date.getFullYear()} ${String(date.getHours()).padStart(
+    2,
+    '0'
+  )}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
 const PcapDataTable = () => {
@@ -22,81 +22,62 @@ const PcapDataTable = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filterType, setFilterType] = useState('IMSI');
-  const [Operator, setOperator] = useState('MTN');
+  const [operator, setOperator] = useState('MTN');
   const [filterValue, setFilterValue] = useState('');
-  const [showPopup, setShowPopup] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [kmlId, setKmlId] = useState(null);
+  const [showPopup, setShowPopup] = useState();
+  const [coordinates, setCoordinates] = useState([]);
   const itemsPerPage = 10;
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const getMapCoordinates = (locationCode) => {
+  const getLocationDetails = (locationCode) => {
     const parts = locationCode.split('-');
-    const lastPart = parts[parts.length - 1];
+    const ci = parts[parts.length - 1];
+    const location = Locations.find((loc) => loc['CI(*)'] === parseInt(ci));
 
-    return {
-      CI: lastPart,
-    };
-  };
-
-
-  const getLocationDetails = (code) => {
-    const ciCode = getMapCoordinates(code).CI;
-    const location = Locations.find((location) => 
-      String(location['CI(*)']) === ciCode
-    );
-   
     if (location) {
+      return location;
+    } else {
       return {
-        siteName: location['Site Name'] || 'Unknown',
-        sectorName: location['Azimuth(*)'] || 'Unknown',
+        'Core Location': 'Unknown',
+        MCC: 'Unknown',
+        MNC: 'Unknown',
+        'LAC(*)': 'Unknown',
+        RAC: 'Unknown',
+        'CI(*)': 'Unknown',
+        'Site Name': 'Unknown',
+        'Sector Location': 'Unknown',
+        Longitude: '0',
+        Latitude: '0',
+        'Azimuth(*)': 'Unknown',
       };
     }
-  
-    return { siteName: 'Unknown', sectorName: 'Unknown' };
   };
+
   const fetchData = () => {
     setLoading(true);
     axios
-      .get(' https://pcap-backend.onrender.com/api/subscriber-data')
+      .get('https://pcap-backend.onrender.com/api/subscriber-data')
       .then((response) => {
         const transformedData = response.data.map((subscriber) => ({
           ...subscriber,
           time: formatDateToYMDHM(subscriber.time),
         }));
-
         setData(transformedData);
         setCurrentData(transformedData);
       })
-      .catch((error) => {
-        console.error('Error fetching subscriber data:', error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      .catch((error) => console.error('Error fetching subscriber data:', error))
+      .finally(() => setLoading(false));
   };
 
-  const handleStartDateChange = (event) => {
-    setStartDate(event.target.value);
-  };
-
-  const handleEndDateChange = (event) => {
-    setEndDate(event.target.value);
-  };
-
-  const handleFilterTypeChange = (event) => {
-    setFilterType(event.target.value);
-  };
-
-  const handleOperatorChange = (event) => {
-    setOperator(event.target.value);
-  };
-
-  const handleFilterValueChange = (event) => {
-    setFilterValue(event.target.value);
-  };
+  const handleStartDateChange = (event) => setStartDate(event.target.value);
+  const handleEndDateChange = (event) => setEndDate(event.target.value);
+  const handleFilterTypeChange = (event) => setFilterType(event.target.value);
+  const handleOperatorChange = (event) => setOperator(event.target.value);
+  const handleFilterValueChange = (event) => setFilterValue(event.target.value);
 
   const applyFilter = (filterFunction) => {
     setCurrentData((prevData) => prevData.filter(filterFunction));
@@ -105,24 +86,17 @@ const PcapDataTable = () => {
 
   const filterData = (event) => {
     event.preventDefault();
-
-    if (event.target.id === 'timeFilterForm') {
-      if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        applyFilter((subscriber) => {
-          const subscriberDate = new Date(subscriber.time);
-          return subscriberDate >= start && subscriberDate <= end;
-        });
-      }
-    } else if (event.target.id === 'dataFilterForm') {
-      if (filterValue) {
-        applyFilter((subscriber) =>
-          subscriber[filterType]
-            .toLowerCase()
-            .includes(filterValue.toLowerCase())
-        );
-      }
+    if (event.target.id === 'timeFilterForm' && startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      applyFilter((subscriber) => {
+        const subscriberDate = new Date(subscriber.time);
+        return subscriberDate >= start && subscriberDate <= end;
+      });
+    } else if (event.target.id === 'dataFilterForm' && filterValue) {
+      applyFilter((subscriber) =>
+        subscriber[filterType].toLowerCase().includes(filterValue.toLowerCase())
+      );
     }
   };
 
@@ -135,42 +109,84 @@ const PcapDataTable = () => {
     setCurrentData(data);
   };
 
-  const pageCount = Math.ceil(currentData.length / itemsPerPage);
-  const offset = (currentPage - 1) * itemsPerPage;
-  const paginatedData = currentData.slice(offset, offset + itemsPerPage);
+  const handlePageChange = (event, page) => setCurrentPage(page);
 
-  const handlePageChange = (event, page) => {
-    setCurrentPage(page);
+  const handleLocationsFileUpload = async (event) => {
+    const file = event.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post(
+        'https://pcap-backend.onrender.com/api/upload-locations',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+      setKmlId(response.data.kmlId);
+      alert('Locations file uploaded and processed successfully');
+    } catch (error) {
+      console.error('Error uploading locations file:', error);
+      alert('Error uploading locations file', error);
+    }
+  };
+
+  const downloadKML = async () => {
+    if (!kmlId) {
+      alert('No KML file available. Please upload a locations file first.');
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `https://pcap-backend.onrender.com/api/kml/${kmlId}`,
+        {
+          responseType: 'blob',
+        }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', '2G_core_areas.kml');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading KML:', error);
+      alert('Error downloading KML file');
+    }
   };
 
   const handleRowClick = (subscriber) => {
-    setSelectedLocation(subscriber.location);
-    // setShowPopup(true);
-
-    // Extract the MSISDN and Location from the clicked row
     const selectedMSISDN = subscriber.MSISDN;
-
-    // Filter data to find rows with the same MSISDN
     const matchingSubscribers = currentData.filter(
       (item) => item.MSISDN === selectedMSISDN
     );
+    const locations = matchingSubscribers.map((item) => item.Location);
 
-    // Collect the locations of these rows
-    const locations = matchingSubscribers.map((item) =>
-      getMapCoordinates(item.Location)
-    );
+    // console.log('locations', locations);
 
-    // Log the locations to the console
-    console.log('Locations for MSISDN', selectedMSISDN, ':', locations);
+    const coordinates = locations
+      .map((locationCode) => getLocationDetails(locationCode))
+      .map((location) => ({
+        lat: parseFloat(location.Latitude),
+        lng: parseFloat(location.Longitude),
+      }));
 
-    //open google earth to plot the locations
-    window.open('https://earth.google.com/web', '_blank');
+    console.log('coordinates', coordinates);
+
+    setCoordinates(coordinates);
+    setShowPopup(true);
   };
 
   const closePopup = () => {
     setShowPopup(false);
-    setSelectedLocation(null);
   };
+
+  const pageCount = Math.ceil(currentData.length / itemsPerPage);
+  const offset = (currentPage - 1) * itemsPerPage;
+  const paginatedData = currentData.slice(offset, offset + itemsPerPage);
 
   return (
     <div className="px-6 py-2 h-max overflow-y-auto relative">
@@ -182,7 +198,7 @@ const PcapDataTable = () => {
           onSubmit={filterData}
         >
           <select
-            value={Operator}
+            value={operator}
             onChange={handleOperatorChange}
             className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
           >
@@ -261,6 +277,20 @@ const PcapDataTable = () => {
         >
           Clear All Filters
         </button>
+
+        <h3 className="w-full font-bold">Upload Locations File</h3>
+        <input
+          type="file"
+          accept=".xls,.xlsx"
+          onChange={handleLocationsFileUpload}
+          className="text-sm py-2 px-4 outline-none bg-white-100 border-[1px] border-gray-200 rounded"
+        />
+        <button
+          onClick={downloadKML}
+          className="w-max bg-gray-500 hover:bg-gray-700 text-sm text-white font-thin py-2 px-6 rounded"
+        >
+          Download KML
+        </button>
       </div>
 
       <div className="mt-2 overflow-x-auto border-[1px] border-gray-200 h-[60vh]">
@@ -286,9 +316,6 @@ const PcapDataTable = () => {
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 MM (Mobility management state)
               </th>
-              {/* <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                NB
-              </th> */}
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 RAN-Id
               </th>
@@ -301,15 +328,12 @@ const PcapDataTable = () => {
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 Sector Location
               </th>
-              {/* <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
-                HssRealm
-              </th> */}
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="13" className="text-center py-10">
+                <td colSpan="11" className="text-center py-10">
                   <div className="ml-[45vw] my-[10vh]">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-500"></div>
                   </div>
@@ -334,7 +358,6 @@ const PcapDataTable = () => {
                     className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis"
                     onClick={() => handleRowClick(subscriber)}
                   >
-                    {/* {subscriber.MSISDN} */}
                     **********
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -352,9 +375,6 @@ const PcapDataTable = () => {
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.MM}
                   </td>
-                  {/* <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {subscriber.NB}
-                  </td> */}
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.RANId}
                   </td>
@@ -365,10 +385,10 @@ const PcapDataTable = () => {
                     {subscriber.Location}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {getLocationDetails(subscriber.Location).siteName}
+                    {getLocationDetails(subscriber.Location)['Site Name']}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {getLocationDetails(subscriber.Location).sectorName}
+                    {getLocationDetails(subscriber.Location)['Sector Location']}
                   </td>
                   {/* <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.HssRealm}
@@ -397,19 +417,21 @@ const PcapDataTable = () => {
         />
       </div>
 
-      {/* {showPopup && (
+      {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-200 p-6 rounded-lg w-3/4 h-[90%] relative overflow-y-auto">
+          <div className="bg-gray-200 p-6 rounded-lg w-3/4 h-3/4 relative overflow-y-auto">
             <button
               onClick={closePopup}
-              className="absolute top-6 right-6 font-bold text-gray-600 hover:text-gray-800 w-max px-2 border-[1px] border-gray-400 rounded"
+              className="absolute top-2 z-10 right-2 font-bold bg-gray-200 text-red-600 hover:bg-red-400 hover:text-white w-max px-2 border-[1px] border-red-400 rounded"
             >
               x
             </button>
-            <h2 className="text-xl mb-4">Location: {selectedLocation}</h2>
+            <div className="w-full h-full">
+              <GoogleMapsEmbed coordinates={coordinates} />
+            </div>
           </div>
         </div>
-      )} */}
+      )}
     </div>
   );
 };
