@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Pagination from '@mui/material/Pagination';
-import Locations from '../utils/2G_core_areas.js';
+// import Locations from '../utils/2G_core_areas.js';
 import GoogleMapsEmbed from './GoogleMapsEmbed.jsx';
+import Locations2G from '../utils/2G_core_areas.js';
+import Locations3G from '../utils/3G_core_areas.js';
 
 const formatDateToYMDHM = (dateString) => {
   const date = new Date(dateString);
@@ -13,6 +15,15 @@ const formatDateToYMDHM = (dateString) => {
     '0'
   )}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
+
+// Normalize 2G data by adding "RAN-Id" with a value of "unknown" in order to match objects from 3G locations file
+const normalizedLocations2G = Locations2G.map((location) => ({
+  ...location,
+  'RAN-Id': 'unknown',
+}));
+
+// Combine the normalized 2G data with the 3G data
+const Locations = [...normalizedLocations2G, ...Locations3G];
 
 const PcapDataTable = () => {
   const [data, setData] = useState([]);
@@ -66,6 +77,7 @@ const PcapDataTable = () => {
           ...subscriber,
           time: formatDateToYMDHM(subscriber.time),
         }));
+        // console.log('transformed data[0]: ', transformedData[0]);
         setData(transformedData);
         setCurrentData(transformedData);
       })
