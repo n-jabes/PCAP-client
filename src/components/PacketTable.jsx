@@ -5,6 +5,7 @@ import Pagination from '@mui/material/Pagination';
 import GoogleMapsEmbed from './GoogleMapsEmbed.jsx';
 import Locations2G from '../utils/2G_core_areas.js';
 import Locations3G from '../utils/3G_core_areas.js';
+import Locations4G from '../utils/4G_core_areas.js';
 
 const formatDateToYMDHM = (dateString) => {
   const date = new Date(dateString);
@@ -16,14 +17,39 @@ const formatDateToYMDHM = (dateString) => {
   )}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-// Normalize 2G data by adding "RAN-Id" with a value of "unknown" in order to match objects from 3G locations file
-const normalizedLocations2G = Locations2G.map((location) => ({
-  ...location,
-  'RAN-Id': 'unknown',
-}));
+// Step 1: Identify all possible keys across the datasets
+const getAllKeys = (...dataSets) => {
+  const allKeys = new Set();
+  dataSets.forEach((dataSet) => {
+    dataSet.forEach((item) => {
+      Object.keys(item).forEach((key) => allKeys.add(key));
+    });
+  });
+  return Array.from(allKeys);
+};
 
-// Combine the normalized 2G data with the 3G data
-const Locations = [...normalizedLocations2G, ...Locations3G];
+// Step 2: Normalize data by ensuring all keys are present in each object
+const normalizeData = (dataSet, allKeys) => {
+  return dataSet.map((item) => {
+    const normalizedItem = {};
+    allKeys.forEach((key) => {
+      normalizedItem[key] = item[key] !== undefined ? item[key] : null;
+    });
+    return normalizedItem;
+  });
+};
+
+// Step 3: Combine the normalized data sets
+const combineDataSets = () => {
+  const allKeys = getAllKeys(Locations2G, Locations3G, Locations4G);
+  const normalized2G = normalizeData(Locations2G, allKeys);
+  const normalized3G = normalizeData(Locations3G, allKeys);
+  const normalized4G = normalizeData(Locations4G, allKeys);
+  return [...normalized2G, ...normalized3G, ...normalized4G];
+};
+
+// Combined and normalized locations
+const Locations = combineDataSets();
 
 const PcapDataTable = () => {
   const [data, setData] = useState([]);
@@ -328,9 +354,9 @@ const PcapDataTable = () => {
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 MM (Mobility management state)
               </th>
-              <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
+              {/* <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 RAN-Id
-              </th>
+              </th> */}
               <th className="py-3 px-4 border-b whitespace-nowrap font-bold">
                 Location
               </th>
@@ -385,11 +411,18 @@ const PcapDataTable = () => {
                       : 'Unknown'}
                   </td>
                   <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {subscriber.MM}
+                    {/* {subscriber.MM} */}
+                    {subscriber.MM === 'AIR'
+                      ? 'Attached Idle Reachable'
+                      : subscriber.MM === 'AC'
+                      ? 'Attached Connected'
+                      : subscriber.MM === 'D'
+                      ? 'Disconnected'
+                      : 'Unknown'}
                   </td>
-                  <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {/* <td className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">
                     {subscriber.RANId}
-                  </td>
+                  </td> */}
                   <td
                     className="py-2 px-4 border-b text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis"
                     onClick={() => handleRowClick(subscriber)}
